@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Price Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+            /* Gradient: brown, orange, green */
+            min-height: 100vh;
+            background: linear-gradient(135deg, #8B5C2A 0%, #FFA500 50%, #228B22 100%);
+        }
+        input, button { font-size: 1em; padding: 0.5em; }
+        #result { margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <h1>Crypto Price Predictor</h1>
+    <form id="predict-form">
+        <label for="symbol">Crypto Symbol (e.g., bitcoin, ethereum): </label>
+        <input type="text" id="symbol" required />
+        <button type="submit">Predict</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        // Set this to your Render backend URL after deployment
+        const BACKEND_URL = 'http://localhost:8000'; // e.g., 'https://your-app.onrender.com'
+        document.getElementById('predict-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const symbol = document.getElementById('symbol').value.trim().toLowerCase();
+            document.getElementById('result').textContent = 'Predicting...';
+            const res = await fetch(`${BACKEND_URL}/predict`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbol })
+            });
+            const data = await res.json();
+            if (data.predicted_price && data.last_price) {
+                document.getElementById('result').innerHTML =
+                    `<b>${data.symbol}</b><br>Last Price: $${data.last_price.toFixed(2)}<br>Predicted Next Price: $${data.predicted_price.toFixed(2)}`;
+            } else {
+                document.getElementById('result').textContent = 'Prediction failed. Please check the symbol.';
+            }
+        });
+    </script>
+</body>
+</html> 
