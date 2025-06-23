@@ -43,6 +43,8 @@ def predict_price(req: PredictionRequest):
         return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
     if resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Invalid symbol or no data available")
+    print("CoinGecko status:", resp.status_code)
+    print("CoinGecko response:", resp.text)
     data = resp.json()
     prices = data.get("prices", [])
     if len(prices) < 2:
