@@ -35,14 +35,13 @@ COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/{symbol}/market_chart"
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict_price(req: PredictionRequest):
-    # Fetch last 24 hours of hourly prices
     url = COINGECKO_URL.format(symbol=req.symbol)
     params = {"vs_currency": "usd", "days": 1, "interval": "hourly"}
     try:
         resp = requests.get(url, params=params, timeout=3)
     except requests.exceptions.Timeout:
         return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
-    if resp.status_code != 200 or len(prices) < 2:
+    if resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Invalid symbol or no data available")
     data = resp.json()
     prices = data.get("prices", [])
