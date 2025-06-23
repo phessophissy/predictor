@@ -36,7 +36,7 @@ COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/{symbol}/market_chart"
 @app.post("/predict", response_model=PredictionResponse)
 def predict_price(req: PredictionRequest):
     url = COINGECKO_URL.format(symbol=req.symbol)
-    params = {"vs_currency": "usd", "days": 1, "interval": "hourly"}
+    params = {"vs_currency": "usd", "days": 2}
     try:
         resp = requests.get(url, params=params, timeout=3)
     except requests.exceptions.Timeout:
@@ -47,7 +47,8 @@ def predict_price(req: PredictionRequest):
     prices = data.get("prices", [])
     if len(prices) < 2:
         return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
-    # Prepare data for regression
+    # Use only the last 24 data points (last 24 hours)
+    prices = prices[-24:]
     X = np.arange(len(prices)).reshape(-1, 1)
     y = np.array([p[1] for p in prices])
     model = LinearRegression()
@@ -59,4 +60,4 @@ def predict_price(req: PredictionRequest):
 
 @app.get("/")
 def read_index():
-    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html")) 
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
