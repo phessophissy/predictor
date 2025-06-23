@@ -37,7 +37,10 @@ def predict_price(req: PredictionRequest):
     # Fetch last 24 hours of hourly prices
     url = COINGECKO_URL.format(symbol=req.symbol)
     params = {"vs_currency": "usd", "days": 1, "interval": "hourly"}
-    resp = requests.get(url, params=params)
+    try:
+        resp = requests.get(url, params=params, timeout=3)
+    except requests.exceptions.Timeout:
+        return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
     if resp.status_code != 200:
         return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
     data = resp.json()

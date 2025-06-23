@@ -6,42 +6,169 @@
     <title>Crypto Price Predictor</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 2em;
-            /* Gradient: brown, orange, green */
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #8B5C2A 0%, #FFA500 50%, #228B22 100%);
+            background: linear-gradient(135deg, #2d2d2d 0%, #8B5C2A 30%, #FFA500 60%, #228B22 100%);
+            overflow-x: hidden;
         }
-        input, button { font-size: 1em; padding: 0.5em; }
-        #result { margin-top: 1em; }
+        .ticker {
+            width: 100vw;
+            background: rgba(30, 30, 30, 0.95);
+            color: #fff;
+            padding: 0.5em 0;
+            font-size: 1.1em;
+            white-space: nowrap;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        .ticker span {
+            display: inline-block;
+            margin: 0 2em;
+        }
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 400px;
+            margin: 7em auto 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 2em 2em 1.5em 2em;
+        }
+        h1 {
+            text-align: center;
+            color: #FFA500;
+            margin-bottom: 1em;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, button {
+            font-size: 1em;
+            padding: 0.5em;
+            margin-top: 0.5em;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #FFA500;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-left: 0.5em;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #228B22;
+        }
+        #result {
+            margin-top: 1.5em;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        /* Floating crypto icons */
+        .crypto-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .crypto-icon {
+            position: absolute;
+            opacity: 0.13;
+            width: 60px;
+            height: 60px;
+            animation: float 18s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(110vh) scale(1) rotate(0deg); }
+            100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <h1>Crypto Price Predictor</h1>
-    <form id="predict-form">
-        <label for="symbol">Crypto Symbol (e.g., bitcoin, ethereum): </label>
-        <input type="text" id="symbol" required />
-        <button type="submit">Predict</button>
-    </form>
-    <div id="result"></div>
+    <div class="ticker" id="ticker"></div>
+    <div class="crypto-bg" id="crypto-bg"></div>
+    <div class="container">
+        <h1>Crypto Price Predictor</h1>
+        <form id="predict-form">
+            <label for="symbol">Crypto Symbol (e.g., bitcoin, ethereum): </label>
+            <input type="text" id="symbol" required />
+            <button type="submit">Predict</button>
+        </form>
+        <div id="result"></div>
+    </div>
     <script>
-        // Set this to your Render backend URL after deployment
+        // Ticker bar for live prices
+        const tickerSymbols = ['bitcoin', 'ethereum', 'dogecoin', 'solana', 'cardano'];
+        const tickerDisplay = {
+            bitcoin: 'BTC',
+            ethereum: 'ETH',
+            dogecoin: 'DOGE',
+            solana: 'SOL',
+            cardano: 'ADA'
+        };
+        async function updateTicker() {
+            try {
+                const ids = tickerSymbols.join(',');
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`;
+                const res = await fetch(url);
+                const data = await res.json();
+                let html = '';
+                for (const sym of tickerSymbols) {
+                    if (data[sym]) {
+                        html += `<span><b>${tickerDisplay[sym]}</b>: $${data[sym].usd.toLocaleString()}</span>`;
+                    }
+                }
+                document.getElementById('ticker').innerHTML = html;
+            } catch (e) {
+                document.getElementById('ticker').textContent = 'Unable to load prices.';
+            }
+        }
+        updateTicker();
+        setInterval(updateTicker, 10000);
+
+        // Floating crypto SVG icons
+        const icons = [
+            // Bitcoin
+            `<svg class='crypto-icon' style='left:10vw;animation-delay:0s' viewBox='0 0 64 64'><circle cx='32' cy='32' r='32' fill='#f7931a'/><text x='32' y='44' font-size='32' text-anchor='middle' fill='#fff' font-family='Arial'>₿</text></svg>`,
+            // Ethereum
+            `<svg class='crypto-icon' style='left:30vw;animation-delay:3s' viewBox='0 0 64 64'><circle cx='32' cy='32' r='32' fill='#3c3c3d'/><text x='32' y='44' font-size='32' text-anchor='middle' fill='#fff' font-family='Arial'>Ξ</text></svg>`,
+            // Dogecoin
+            `<svg class='crypto-icon' style='left:50vw;animation-delay:6s' viewBox='0 0 64 64'><circle cx='32' cy='32' r='32' fill='#c2a633'/><text x='32' y='44' font-size='32' text-anchor='middle' fill='#fff' font-family='Arial'>Ð</text></svg>`,
+            // Solana
+            `<svg class='crypto-icon' style='left:70vw;animation-delay:9s' viewBox='0 0 64 64'><circle cx='32' cy='32' r='32' fill='#00ffa3'/><text x='32' y='44' font-size='32' text-anchor='middle' fill='#222' font-family='Arial'>S</text></svg>`,
+            // Cardano
+            `<svg class='crypto-icon' style='left:85vw;animation-delay:12s' viewBox='0 0 64 64'><circle cx='32' cy='32' r='32' fill='#0033ad'/><text x='32' y='44' font-size='32' text-anchor='middle' fill='#fff' font-family='Arial'>₳</text></svg>`
+        ];
+        document.getElementById('crypto-bg').innerHTML = icons.join('');
+
+        // Backend URL
         const BACKEND_URL = 'https://predictor-aaex.onrender.com';
         document.getElementById('predict-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const symbol = document.getElementById('symbol').value.trim().toLowerCase();
             document.getElementById('result').textContent = 'Predicting...';
-            const res = await fetch(`${BACKEND_URL}/predict`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symbol })
-            });
-            const data = await res.json();
-            if (data.predicted_price && data.last_price) {
-                document.getElementById('result').innerHTML =
-                    `<b>${data.symbol}</b><br>Last Price: $${data.last_price.toFixed(2)}<br>Predicted Next Price: $${data.predicted_price.toFixed(2)}`;
-            } else {
-                document.getElementById('result').textContent = 'Prediction failed. Please check the symbol.';
+            try {
+                const res = await fetch(`${BACKEND_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol })
+                });
+                const data = await res.json();
+                if (data.predicted_price && data.last_price) {
+                    document.getElementById('result').innerHTML =
+                        `<b>${data.symbol.toUpperCase()}</b><br>Last Price: $${data.last_price.toFixed(2)}<br>Predicted Next Price: $${data.predicted_price.toFixed(2)}`;
+                } else {
+                    document.getElementById('result').textContent = 'Prediction failed. Please check the symbol.';
+                }
+            } catch (err) {
+                document.getElementById('result').textContent = 'Error connecting to backend.';
             }
         });
     </script>
