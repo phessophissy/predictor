@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
+from typing import Optional
 
 app = FastAPI()
 
@@ -26,8 +27,8 @@ class PredictionRequest(BaseModel):
     symbol: str  # e.g., 'bitcoin', 'ethereum'
 
 class PredictionResponse(BaseModel):
-    predicted_price: float
-    last_price: float
+    predicted_price: Optional[float]
+    last_price: Optional[float]
     symbol: str
 
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/{symbol}/market_chart"
@@ -41,8 +42,8 @@ def predict_price(req: PredictionRequest):
         resp = requests.get(url, params=params, timeout=3)
     except requests.exceptions.Timeout:
         return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
-    if resp.status_code != 200:
-        return {"predicted_price": None, "last_price": None, "symbol": req.symbol}
+    if resp.status_code != 200 or len(prices) < 2:
+        raise HTTPException(status_code=400, detail="Invalid symbol or no data available")
     data = resp.json()
     prices = data.get("prices", [])
     if len(prices) < 2:
