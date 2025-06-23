@@ -1,3 +1,5 @@
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/phessophissy/predictor)
+
 # Crypto Price Predictor
 
 A minimal web AI app to predict the next price of a cryptocurrency using recent price data and a simple AI model.
