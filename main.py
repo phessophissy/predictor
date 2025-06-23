@@ -4,6 +4,9 @@ from pydantic import BaseModel
 import requests
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 app = FastAPI()
 
@@ -15,6 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static directory if needed in the future
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class PredictionRequest(BaseModel):
     symbol: str  # e.g., 'bitcoin', 'ethereum'
@@ -46,4 +52,8 @@ def predict_price(req: PredictionRequest):
     next_time = np.array([[len(prices)]])
     predicted_price = float(model.predict(next_time)[0])
     last_price = float(y[-1])
-    return PredictionResponse(predicted_price=predicted_price, last_price=last_price, symbol=req.symbol) 
+    return PredictionResponse(predicted_price=predicted_price, last_price=last_price, symbol=req.symbol)
+
+@app.get("/")
+def read_index():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html")) 
